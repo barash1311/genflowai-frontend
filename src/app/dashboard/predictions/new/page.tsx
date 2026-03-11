@@ -225,19 +225,84 @@ export default function NewPredictionPage() {
 
           {result && (
             <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="mt-6 p-6 border border-emerald-200 bg-emerald-50 rounded-xl"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-8 space-y-6"
             >
-              <h3 className="text-lg font-bold text-emerald-700 mb-2 flex items-center">
-                <CheckCircle2 className="mr-2 h-5 w-5" /> Prediction Received
-              </h3>
-              <p className="text-sm text-slate-500 mb-4">Execution Time: {result.executionTimeMs}ms</p>
-              <div className="bg-slate-900 p-4 rounded-lg overflow-x-auto">
-                <pre className="text-emerald-400 font-mono text-xs">
-                  {result.result ? JSON.stringify(JSON.parse(result.result), null, 2) : 'No output JSON provided'}
-                </pre>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-slate-900 flex items-center">
+                  <CheckCircle2 className="mr-2 h-6 w-6 text-emerald-500" /> 
+                  Prediction Complete
+                </h3>
+                <span className="text-sm font-medium px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full border border-emerald-200">
+                  {result.executionTimeMs}ms
+                </span>
               </div>
+
+              {(() => {
+                try {
+                  const data = JSON.parse(result.result);
+                  return (
+                    <div className="space-y-6">
+                      {/* Reasonings / Summary */}
+                      {data.reasoning && (
+                        <div className="p-4 bg-slate-50 border-l-4 border-emerald-500 rounded-r-xl">
+                          <h4 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">Agent Reasoning</h4>
+                          <p className="text-slate-600 leading-relaxed text-sm italic">
+                            "{data.reasoning}"
+                          </p>
+                        </div>
+                      )}
+
+                      {/* SQL Block */}
+                      {data.sql && (
+                        <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-900 shadow-xl">
+                          <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
+                            <span className="text-xs font-mono text-slate-400">GENERATE_POSTGIS_SQL</span>
+                            <div className="flex gap-1.5">
+                              <div className="w-2.5 h-2.5 rounded-full bg-red-400/20"></div>
+                              <div className="w-2.5 h-2.5 rounded-full bg-amber-400/20"></div>
+                              <div className="w-2.5 h-2.5 rounded-full bg-emerald-400/20"></div>
+                            </div>
+                          </div>
+                          <div className="p-4 overflow-x-auto max-h-[300px]">
+                            <pre className="text-emerald-400 font-mono text-sm leading-relaxed">
+                              <code>{data.sql}</code>
+                            </pre>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Download Link */}
+                      {data.shapefile_path && data.shapefile_path !== 'PENDING' && data.shapefile_path !== 'UNSAFE_SQL' && (
+                        <div className="flex justify-center p-6 bg-emerald-600/5 border border-dashed border-emerald-500/30 rounded-2xl">
+                          <div className="text-center">
+                            <div className="inline-flex p-3 bg-emerald-100 text-emerald-600 rounded-full mb-3">
+                              <Database className="h-6 w-6" />
+                            </div>
+                            <h4 className="text-slate-900 font-bold">Geospatial Data Ready</h4>
+                            <p className="text-slate-500 text-sm mb-4">The agent successfully generated the PostGIS dataset.</p>
+                            <a 
+                              href={`http://localhost:8000${data.shapefile_path}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-emerald-500/20"
+                            >
+                              Download Shapefile (.zip) <ArrowRight className="ml-2 h-4 w-4" />
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                } catch (e) {
+                  return (
+                    <div className="bg-slate-900 p-4 rounded-lg overflow-x-auto">
+                      <pre className="text-emerald-400 font-mono text-xs">{result.result}</pre>
+                    </div>
+                  );
+                }
+              })()}
             </motion.div>
           )}
 
